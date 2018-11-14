@@ -148,6 +148,22 @@ multiperiod_binomial("call", S0, RfAnnual, t)
 multiperiod_binomial("put", S0, RfAnnual, t)
 
 
+# ---------- extra activity: ------------------
+# A Pythagorean triplet is a set of three natural numbers, a < b < c, for which a^2 + b^2 = c^2
+# Given an integer N, check if there exists a Pythagorean triplet for which a + b + c = N
+# Return value: a * b * c if there exists such triplet, otherwise, return -1
+extra_points <- function(N){
+  aux = 0
+  for(a in (1:(N/3))){
+    for(b in (a:(N/2))){
+      c = N - a - b
+      if((a*a + b*b) == (c*c)){
+        return(a * b * c)
+      }
+    }
+  }
+  return(-1)
+}
 
 
 
