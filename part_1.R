@@ -37,6 +37,7 @@ ER
 gmvport <- globalMin.portfolio(ER, COV)
 # Volatility = Standard deviation
 volatility <- as.numeric(gmvport[3])
+volatility_annual <- volatility * sqrt(52)
 # Growth rate in case price goes up
 u <- exp(volatility)
 d <- 1/u
@@ -45,7 +46,7 @@ getSymbols("TB3MS",
            src = "FRED")
 Rf <- as.numeric(tail(TB3MS, 1))/52/100
 S0 <- as.numeric(tail(Ad(prices.zoo), 1))
-RfAnnual <- Rf * sqrt(52)
+RfAnnual <- Rf * 52
 # Time to expiration date in years
 t <- 1
 
@@ -118,33 +119,35 @@ multiperiod_binomial("put", S0, u, d, Rf, 1000)
 
 # ---------- black and sholes funciton definition: ------------------
 
-d1 <- function(s, k, r, t) {
-  (log(s/k) + (r + ((s^2) / 2)) * t) / (s * sqrt(t))
+d1 <- function(sd, S, k, r, t) {
+  (log(S/k) + (r + ((sd^2) / 2)) * t) / (sd * sqrt(t))
 }
 
-d2 <- function(s, k, r, t) {
-  d1(s, k, r, t) - (s * sqrt(t))
+d2 <- function(sd, S, k, r, t) {
+  d1(sd, S, k, r, t) - (sd * sqrt(t))
 }
 
-black_sholes <- function(option, S, RfAnnual, t){
-  # Strike price
-  K = S * 1.05
+black_sholes <- function(option, S, sd, RfAnnual, t){
+  cat("\n Parameters:","\n option:",option, ", S0:", S, ", RfAnnual:", RfAnnual, ", t:", t, "\n")
+  # K: strike price (any value K > S)
+  K = S0 * 1.05
+  cat("\n K:", K)
   if(option == "call"){
-    result = (S * pnorm(d1(S, K, RfAnnual, t))) - (K * exp(-RfAnnual * t) * pnorm(d2(S, K, RfAnnual, t))) 
+    result = (S * pnorm(d1(sd, S, K, RfAnnual, t))) - (K * exp(-RfAnnual * t) * pnorm(d2(sd, S, K, RfAnnual, t))) 
   }else if(option == "put"){
-    result = (K * exp(-RfAnnual * t) * pnorm(-d2(S, K, RfAnnual, t))) - (S * pnorm(-d1(S, K, RfAnnual, t)))
+    result = (K * exp(-RfAnnual * t) * pnorm(-d2(sd, S, K, RfAnnual, t))) - (S * pnorm(-d1(sd, S, K, RfAnnual, t)))
   }else return("error, option must be 'call' or 'put'") 
-  print(result)
+  cat("\n",option,"value:", result)
 }
 
 # ---------- black and sholes funciton tests: ------------------
 
 # test with incorrect option parameters
-black_sholes("call error", S0, RfAnnual, t)
+black_sholes("call error", S0, volatility_annual, RfAnnual, t)
 # test call
-black_sholes("call", S0, RfAnnual, t)
+black_sholes("call", S0, volatility_annual, RfAnnual, t)
 # test put
-black_sholes("put", S0, RfAnnual, t)
+black_sholes("put", S0, volatility_annual, RfAnnual, t)
 
 
 # ---------- extra activity: ------------------
