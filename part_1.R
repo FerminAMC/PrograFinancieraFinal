@@ -45,6 +45,9 @@ getSymbols("TB3MS",
            src = "FRED")
 Rf <- as.numeric(tail(TB3MS, 1))/52/100
 S0 <- as.numeric(tail(Ad(prices.zoo), 1))
+RfAnnual <- (Rf * 52)/12
+# Time to expiration date in years
+t <- 1
 
 # ---------- multiperiod binomial funciton definition: ------------------
 
@@ -109,4 +112,56 @@ multiperiod_binomial("call error", S0, u, d, Rf, 1000)
 multiperiod_binomial("call", S0, u, d, Rf, 1000)
 # test put
 multiperiod_binomial("put", S0, u, d, Rf, 1000)
+
+
+
+# ---------- black and sholes funciton definition: ------------------
+
+d1 <- function(s, k, r, t) {
+  (log(s/k) + (r + ((s^2) / 2)) * t) / (s * sqrt(t))
+}
+
+d2 <- function(s, k, r, t) {
+  d1(s, k, r, t) - (s * sqrt(t))
+}
+
+black_sholes <- function(option, S, RfAnnual, t){
+  # Strike price
+  K = S * 1.05
+  N = 1 # No idea what this var represents
+  X = 1 # No idea what this var represents
+  #C = S ??? N(d1) ??? X ??? e???rt ??? N(d2)
+  if(option == "call"){
+    C = (S * N) - (X * exp(-RfAnnual * t) * N) 
+  }else if(option == "put"){
+    P = K * exp(-RfAnnual * t) * (-d2(S, K, RfAnnual, t)) - S * (-d1(S, K, RfAnnual, t))
+  }else return("error, option must be 'call' or 'put'") 
+}
+
+# ---------- black and sholes funciton tests: ------------------
+
+# test with incorrect option parameters
+multiperiod_binomial("call error", S0, RfAnnual, t)
+# test call
+multiperiod_binomial("call", S0, RfAnnual, t)
+# test put
+multiperiod_binomial("put", S0, RfAnnual, t)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
