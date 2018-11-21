@@ -1,15 +1,6 @@
-
-# Cleaning the env
-rm(list=ls())
-
 # install libraries
-# datacamp instalation of quantstrat:
-install.packages("remotes")
-remotes::install_github("braverock/quantstrat")
 # stackoverflow instalation of quantstrat:
-library(FinancialInstrument)
 install.packages("devtools")
-library(PerformanceAnalytics)
 require(devtools)
 devtools::install_github("braverock/blotter") # dependency
 devtools::install_github("braverock/quantstrat")
@@ -20,13 +11,17 @@ library(quantstrat)
 library(dplyr)
 library(quadprog)
 library(PerformanceAnalytics)
+library(FinancialInstrument)
+
+# Cleaning the env
+rm(list=ls())
 
 # Define your trade size and initial equity
 tradesize <- 100000
 initeq <- 100000
 
 # Define the names of your strategy, portfolio and account
-strategy.st <- portfolio.st <- account.st <- "our_strat"
+strategy.st <- portfolio.st <- account.st <- "teamstrat"
 
 # Remove the existing strategy if it exists
 rm.strat(strategy.st)
@@ -38,10 +33,13 @@ from <- "2003-01-01"
 # The end of the data
 to <- "2015-12-31"
 
+Sys.setenv(TZ = "UTC")
+currency("USD")
+
 # Retrieve MSFT from yahoo
 getSymbols("MSFT", from=from, to=to, src="yahoo", adjust=TRUE)
 
-# Use stock() to initialize SPY and set currency to USD
+# Use stock() to initialize MSFT and set currency to USD
 stock("MSFT", currency = "USD")
 
 # Initialize the portfolio
@@ -52,6 +50,8 @@ initAcct(account.st, portfolios = portfolio.st, initDate = initdate, currency = 
 
 # Initialize the orders
 initOrders(portfolio.st, initDate = initdate)
+
+strategy(strategy.st, store=TRUE)
 
 # -------------------- Add Indicators --------------------
 
@@ -169,20 +169,18 @@ add.rule(strategy.st, name = "ruleSignal",
          type = "enter")
 
 # Add a rule that uses an osFUN to size an entry position
+'
 add.rule(strategy = strategy.st, name = "ruleSignal",
          arguments = list(sigcol = "longentry", sigval = TRUE, ordertype = "market",
                           orderside = "long", replace = FALSE, prefer = "Open",
-                          
                           # Use the osFUN called osMaxDollar
                           osFUN = osMaxDollar,
-                          
                           # The tradeSize argument should be equal to tradesize (defined earlier)
                           tradeSize = tradesize,
-                          
                           # The maxSize argument should be equal to tradesize as well
                           maxSize = tradesize),
          type = "enter")
-
+'
 
 # -------------------- Analyze Results --------------------
 
