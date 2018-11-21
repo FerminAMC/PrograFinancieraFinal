@@ -1,0 +1,33 @@
+---
+title: "Untitled"
+author: "Bernardo Gómez Romero"
+date: "21 de noviembre de 2018"
+output: html_document
+---
+
+```{r message=FALSE, warning=FALSE, error=FALSE}
+
+```
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+```{r}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
