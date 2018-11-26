@@ -1,9 +1,9 @@
 # install libraries
 # stackoverflow instalation of quantstrat:
-install.packages("devtools")
-require(devtools)
-devtools::install_github("braverock/blotter") # dependency
-devtools::install_github("braverock/quantstrat")
+#install.packages("devtools")
+#require(devtools)
+#devtools::install_github("braverock/blotter") # dependency
+#devtools::install_github("braverock/quantstrat")
 
 # import libraries
 library(quantmod)
@@ -23,7 +23,8 @@ initeq <- 100000
 # Define the names of your strategy, portfolio and account
 strategy.st <- portfolio.st <- account.st <- "teamstrat"
 
-# Remove the existing strategy if it exists
+# Remove the existing portfolio and strategy if it exists
+rm.strat(portfolio.st)
 rm.strat(strategy.st)
 
 # An initialization date for the backtest
@@ -36,14 +37,14 @@ to <- "2015-12-31"
 Sys.setenv(TZ = "UTC")
 currency("USD")
 
-# Retrieve MSFT from yahoo
-getSymbols("MSFT", from=from, to=to, src="yahoo", adjust=TRUE)
+# Retrieve SPY from yahoo
+getSymbols("SPY", from=from, to=to, src="yahoo", adjust=TRUE)
 
-# Use stock() to initialize MSFT and set currency to USD
-stock("MSFT", currency = "USD")
+# Use stock() to initialize SPY and set currency to USD
+stock("SPY", currency = "USD")
 
 # Initialize the portfolio
-initPortf(portfolio.st, symbols = "MSFT", initDate = initdate, currency = "USD")
+initPortf(portfolio.st, symbols = "SPY", initDate = initdate, currency = "USD")
 
 # Initialize the account
 initAcct(account.st, portfolios = portfolio.st, initDate = initdate, currency = "USD", initEq = initeq)
@@ -54,6 +55,12 @@ initOrders(portfolio.st, initDate = initdate)
 strategy(strategy.st, store=TRUE)
 
 # -------------------- Add Indicators --------------------
+
+# Create a 200-day SMA
+spy_sma <- SMA(x = Cl(SPY), n = 200)
+
+# Create an RSI with a 3-day lookback period
+spy_rsi <- RSI(price = Cl(SPY), n = 3)
 
 # Add a 200-day SMA indicator to strategy.st
 add.indicator(strategy = strategy.st, 
@@ -82,6 +89,52 @@ add.indicator(strategy = strategy.st,
               arguments = list(price = quote(Cl(mktdata)), n = 3), 
               # Label your indicator RSI_3
               label = "RSI_3")
+
+# Write the calc_RSI_avg function
+calc_RSI_avg <- function(price, n1, n2) {
+  
+  # RSI 1 takes an input of the price and n1
+  RSI_1 <- RSI(price = price, n = n1)
+  
+  # RSI 2 takes an input of the price and n2
+  RSI_2 <- RSI(price = price, n = n2)
+  
+  # RSI_avg is the average of RSI_1 and RSI_2
+  RSI_avg <- (RSI_1 + RSI_2)/2
+  
+  # Your output of RSI_avg needs a column name of RSI_avg
+  colnames(RSI_avg) <- "RSI_avg"
+  return(RSI_avg)
+}
+
+# Add this function as RSI_3_4 to your strategy with n1 = 3 and n2 = 4
+add.indicator(strategy.st, name = "RSI", arguments = list(price = quote(Cl(mktdata)), n1 = 3, n2 = 4), label = "RSI_3_4")
+
+# Declare the DVO function
+DVO <- function(HLC, navg = 2, percentlookback = 126) {
+  
+  # Compute the ratio between closing prices to the average of high and low
+  ratio <- Cl(HLC)/((Hi(HLC) + Lo(HLC))/2)
+  
+  # Smooth out the ratio outputs using a moving average
+  avgratio <- SMA(ratio, n = navg)
+  
+  # Convert ratio into a 0-100 value using runPercentRank()
+  out <- runPercentRank(avgratio, n = percentlookback, exact.multiplier = 1) * 100
+  colnames(out) <- "DVO"
+  return(out)
+}
+
+# Add the DVO indicator to your strategy
+add.indicator(strategy = strategy.st, name = "DVO", 
+              arguments = list(HLC = quote(HLC(mktdata)), navg = 2, percentlookback = 126),
+              label = "DVO_2_126")
+
+# Use applyIndicators to test out your indicators
+test <- applyIndicators(strategy = strategy.st, mktdata = OHLC(SPY))
+
+# Subset your data between Sep. 1 and Sep. 5 of 2013
+test_subset <- test["2013-09-01/2013-09-05"]
 
 
 # -------------------- Add Signals --------------------
@@ -129,6 +182,10 @@ add.signal(strategy.st, name = "sigThreshold",
                             cross = TRUE), 
            # Label it thresholdexit
            label = "thresholdexit")
+
+# Create your dataset: test
+test_init <- applyIndicators(strategy.st, mktdata = OHLC(SPY))
+test <- applySignals(strategy = strategy.st, mktdata = test_init)
 
 # Add a sigFormula signal to your code specifying that both longfilter and longthreshold must be TRUE, label it longentry
 add.signal(strategy.st, name = "sigFormula",
@@ -202,19 +259,19 @@ tstats <- tradeStats(Portfolios = portfolio.st)
 tstats$Profit.Factor
 
 # Use chart.Posn to view your system's performance on SPY
-chart.Posn(Portfolio = portfolio.st, Symbol = "MSFT")
+chart.Posn(Portfolio = portfolio.st, Symbol = "SPY")
 
 # Compute the SMA50
-sma50 <- SMA(x = Cl(MSFT), n = 50)
+sma50 <- SMA(x = Cl(SPY), n = 50)
 
 # Compute the SMA200
-sma200 <- SMA(x = Cl(MSFT), n = 200)
+sma200 <- SMA(x = Cl(SPY), n = 200)
 
 # Compute the DVO_2_126 with an navg of 2 and a percentlookback of 126
-dvo <- DVO(HLC = HLC(MSFT), navg = 2, percentlookback = 126)
+dvo <- DVO(HLC = HLC(SPY), navg = 2, percentlookback = 126)
 
 # Recreate the chart.Posn of the strategy from the previous exercise
-chart.Posn(Portfolio = portfolio.st, Symbol = "MSFT")
+chart.Posn(Portfolio = portfolio.st, Symbol = "SPY")
 
 # Overlay the SMA50 on your plot as a blue line
 add_TA(sma50, on = 1, col = "blue")
@@ -228,8 +285,8 @@ add_TA(dvo)
 # ---> Sharpe ratio
 
 # Get instrument returns
-# instrets <- PortfReturns(portfolio.st)
+instrets <- PortfReturns(portfolio.st)
 
 # Compute Sharpe ratio from returns
-# SharpeRatio.annualized(instrets, geometric = FALSE)
+SharpeRatio.annualized(instrets, geometric = FALSE)
 
