@@ -1,8 +1,8 @@
 ---
-title: "Untitled"
-author: "Bernardo Gómez Romero"
-date: "21 de noviembre de 2018"
-output: html_document
+title: "Final Project"
+author: ["Bernardo Gómez Romero", "Fermín Alejandro Moreno Cornejo"]
+date: "11-26-2018"
+output: pdf_document
 ---
 
 ```{r message=FALSE, warning=FALSE, error=FALSE}
