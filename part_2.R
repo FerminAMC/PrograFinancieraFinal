@@ -266,3 +266,66 @@ instrets <- PortfReturns(portfolio.st)
 
 # Compute Sharpe ratio from returns
 SharpeRatio.annualized(instrets, geometric = FALSE)
+
+
+### Compare with different parameters:
+# SMA: Simple Moving Average
+SMA_big = 150
+SMA_small = 30
+# RSI: Relative Strength Index
+RSI_x = 4
+# DVO: David Varadi Oscillator
+DVO_x = 3
+
+### Build portafolio strategy with the defined parameters
+BuildPortfolioStrategy(tradesize_initeq, symbol, initdate, SMA_big, SMA_small, RSI_x, DVO_x)
+
+### Analyze Results
+# Use applyStrategy() to apply the strategy. Save this to out
+out <- applyStrategy(strategy = strategy.st, portfolios = portfolio.st)
+
+# Update the portfolio (portfolio.st)
+updatePortf(portfolio.st)
+daterange <- time(getPortfolio(portfolio.st)$summary)[-1]
+
+# Update the account (account.st)
+updateAcct(account.st, daterange)
+updateEndEq(account.st)
+
+# Get the tradeStats for the portfolio
+tstats <- tradeStats(Portfolios = portfolio.st)
+
+# Print the profit factor
+tstats$Profit.Factor
+
+# Use chart.Posn to view the system's performance on the symbol
+chart.Posn(Portfolio = portfolio.st, Symbol = symbol)
+
+# Compute the SMA_small 
+sma_s <- SMA(x = Cl(get(symbol)), n = SMA_small)
+
+# Compute the SMA_big
+sma_b <- SMA(x = Cl(get(symbol)), n = SMA_big)
+
+# Compute the DVO_x_126 with an navg of DVO_x and a percentlookback of 126
+dvo <- DVO(HLC = HLC(get(symbol)), navg = DVO_x, percentlookback = 126)
+
+# Recreate the chart.Posn of the strategy from the previous exercise
+chart.Posn(Portfolio = portfolio.st, Symbol = symbol)
+
+# Overlay the sma_small on the plot as a blue line
+add_TA(sma_s, on = 1, col = "blue")
+
+# Overlay the SMA_big on the plot as a red line
+add_TA(sma_b, on = 1, col = "red")
+
+# Add the DVO_x_126 to the plot in a new window
+add_TA(dvo)
+
+# ---> Sharpe ratio
+
+# Get instrument returns
+instrets <- PortfReturns(portfolio.st)
+
+# Compute Sharpe ratio from returns
+SharpeRatio.annualized(instrets, geometric = FALSE)

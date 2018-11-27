@@ -474,7 +474,93 @@ instrets <- PortfReturns(portfolio.st)
 SharpeRatio.annualized(instrets, geometric = FALSE)
 ```
 
+### Compare strategy with different parameters:
+```{r message=FALSE, warning=FALSE, error=FALSE, echo=T, results='hide'}
+# SMA: Simple Moving Average
+SMA_big = 150
+SMA_small = 30
+# RSI: Relative Strength Index
+RSI_x = 4
+# DVO: David Varadi Oscillator
+DVO_x = 3
+```
 
+```{r message=FALSE, warning=FALSE, error=FALSE, echo=FALSE, results='hide'}
+### Build portafolio strategy with the defined parameters
+BuildPortfolioStrategy(tradesize_initeq, symbol, initdate, SMA_big, SMA_small, RSI_x, DVO_x)
+
+### Analyze Results
+# Use applyStrategy() to apply the strategy. Save this to out
+```
+
+```{r message=FALSE, warning=FALSE, error=FALSE, echo=F, results='hide'}
+out <- applyStrategy(strategy = strategy.st, portfolios = portfolio.st)
+
+# Update the portfolio (portfolio.st)
+updatePortf(portfolio.st)
+daterange <- time(getPortfolio(portfolio.st)$summary)[-1]
+
+# Update the account (account.st)
+updateAcct(account.st, daterange)
+updateEndEq(account.st)
+
+# Get the tradeStats for the portfolio
+tstats <- tradeStats(Portfolios = portfolio.st)
+```
+
+```{r message=FALSE, warning=FALSE, error=FALSE, echo=F}
+# Print the profit factor
+cat("tstats$Profit.Factor:",tstats$Profit.Factor)
+```
+
+```{r message=FALSE, warning=FALSE, error=FALSE, echo=F, results='hide'}
+# Use chart.Posn to view the system's performance on the symbol
+chart.Posn(Portfolio = portfolio.st, Symbol = symbol)
+
+# Compute the SMA_small 
+sma_s <- SMA(x = Cl(get(symbol)), n = SMA_small)
+
+# Compute the SMA_big
+sma_b <- SMA(x = Cl(get(symbol)), n = SMA_big)
+
+# Compute the DVO_x_126 with an navg of DVO_x and a percentlookback of 126
+dvo <- DVO(HLC = HLC(get(symbol)), navg = DVO_x, percentlookback = 126)
+
+# Recreate the chart.Posn of the strategy from the previous exercise
+chart.Posn(Portfolio = portfolio.st, Symbol = symbol)
+
+# Overlay the sma_small on the plot as a blue line
+add_TA(sma_s, on = 1, col = "blue")
+
+# Overlay the SMA_big on the plot as a red line
+add_TA(sma_b, on = 1, col = "red")
+
+# Add the DVO_x_126 to the plot in a new window
+add_TA(dvo)
+
+# ---> Sharpe ratio
+
+# Get instrument returns
+instrets <- PortfReturns(portfolio.st)
+```
+
+```{r message=FALSE, warning=FALSE, error=FALSE, echo=F}
+# Compute Sharpe ratio from returns
+SharpeRatio.annualized(instrets, geometric = FALSE)
+```
+
+### Analyze results
+IT was cvery usefull for us to have a modular program with the function because we could try different combinations of parameters to find the optimal strategy. The difference between the two set of parameters was that the 2nd one, the Simple Moving Average range was smaller and the RSI and DVO were higher. The results were:
+
+#### Parameters Set 1:
+##### tstats$Profit.Factor: 12.8818
+##### Annualized Sharpe Ratio (Rf=0%): 0.4251517
+
+#### Parameters Set 2:
+##### tstats$Profit.Factor: 4.258949
+##### Annualized Sharpe Ratio (Rf=0%): 0.4336806
+
+The parameters set 1 had a significantly higher profit higher profit factor while the parameters set 2 had a slightly higher annualized sharpe ratio, the better set of parameters was the set 1.
 
 ### Part III
 
